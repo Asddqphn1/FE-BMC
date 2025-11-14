@@ -8,20 +8,69 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Alert, // ⬅️ Tambahkan Alert
+  ActivityIndicator // ⬅️ Tambahkan Loading
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 
-export default function HomeScreen() {
+export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
-  const passwordRef = useRef(null); // ⬅️ untuk fokus otomatis
+  const passwordRef = useRef(null);
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // --- 2. Fungsi untuk handle login ---
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert("Login Gagal", "Username dan Password tidak boleh kosong.");
+      return;
+    }
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/login-bidan`, {
+        method: "POST", // ⬅️ Tentukan method
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          username: username,
+          password: password
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Username atau Password salah.");
+      }
+
+      setIsLoading(false);
+      console.log("Respon sukses:", data);
+      Alert.alert("Sukses", "Login berhasil!");
+    } catch (error) {
+      setIsLoading(false);
+      console.error("Error saat login:", error.message);
+
+      let errorMessage = error.message;
+
+      // Error paling umum jika 'adb reverse' belum jalan
+      if (error.message.includes("Network request failed")) {
+        errorMessage =
+          "Koneksi ke server gagal. Pastikan 'adb reverse tcp:8000 tcp:8000' sudah dijalankan.";
+      }
+
+      Alert.alert("Login Gagal", errorMessage);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      {/* Header */}
       <View style={styles.header}>
         <Image source={require("../../assets/Logo.png")} style={styles.logo} />
         <View style={styles.textBlock}>
@@ -30,7 +79,6 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Gambar Dokter */}
       <View style={styles.imageWrapper}>
         <Image
           source={require("../../assets/Dokter.png")}
@@ -38,16 +86,13 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* Scroll biar keyboard gak nutup */}
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Card Login */}
         <View style={styles.loginCard}>
           <Text style={styles.loginTitle}>Login</Text>
 
-          {/* Username */}
           <Text style={styles.label}>Username:</Text>
           <View style={styles.inputContainer}>
             <TextInput
@@ -55,8 +100,11 @@ export default function HomeScreen() {
               placeholder="Enter your username"
               placeholderTextColor="#ccc"
               returnKeyType="next"
-              onSubmitEditing={() => passwordRef.current?.focus()} // ⬅️ pindah otomatis
+              onSubmitEditing={() => passwordRef.current?.focus()}
               blurOnSubmit={false}
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
             />
             <FontAwesome
               name="user"
@@ -75,6 +123,8 @@ export default function HomeScreen() {
               placeholder="Enter your password"
               placeholderTextColor="#ccc"
               secureTextEntry={!showPassword}
+              value={password} // ⬅️ Hubungkan ke state
+              onChangeText={setPassword} // ⬅️ Hubungkan ke state
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
               <FontAwesome
@@ -98,8 +148,17 @@ export default function HomeScreen() {
           </View>
 
           {/* Tombol Login */}
-          <TouchableOpacity style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>Login</Text>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleLogin} // ⬅️ Panggil fungsi login
+            disabled={isLoading} // ⬅️ Matikan tombol saat loading
+          >
+            {/* ⬅️ Tampilkan loading atau teks */}
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.loginButtonText}>Login</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -143,7 +202,7 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     position: "absolute",
-    top: 60,
+    top: 100,
     left: 0,
     right: 0,
     alignItems: "center"
@@ -236,7 +295,9 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingVertical: 10,
     paddingHorizontal: 45,
-    marginTop: 15
+    marginTop: 15,
+    minHeight: 40,
+    justifyContent: "center"
   },
   loginButtonText: {
     color: "#fff",

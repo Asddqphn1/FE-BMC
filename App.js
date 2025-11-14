@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { NativeRouter, Routes, Route } from "react-router-native";
 import { View, Text } from "react-native";
 import SplashScreen from "./page/splashScreen/SplashScreen";
-import HomeScreen from "./page/HomeScreen/HomeScreen";
+import HomeScreen from "./page/LoginScreen/LoginScreen";
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
