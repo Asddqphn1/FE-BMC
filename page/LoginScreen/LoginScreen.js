@@ -9,20 +9,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert, // ⬅️ Tambahkan Alert
-  ActivityIndicator // ⬅️ Tambahkan Loading
+  Alert,
+  ActivityIndicator
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
+import { useNavigate } from "react-router-native"; // ⬅️ import useNavigate
 
 export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef(null);
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // --- 2. Fungsi untuk handle login ---
+  const navigate = useNavigate(); // ⬅️ hook navigate
+
   const handleLogin = async () => {
     if (!username || !password) {
       Alert.alert("Login Gagal", "Username dan Password tidak boleh kosong.");
@@ -32,16 +33,14 @@ export default function LoginScreen() {
 
     try {
       const response = await fetch(`http://localhost:8000/api/login-bidan`, {
-        method: "POST", // ⬅️ Tentukan method
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json"
         },
-        body: JSON.stringify({
-          username: username,
-          password: password
-        })
+        body: JSON.stringify({ username, password })
       });
+
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message || "Username atau Password salah.");
@@ -49,14 +48,16 @@ export default function LoginScreen() {
 
       setIsLoading(false);
       console.log("Respon sukses:", data);
-      Alert.alert("Sukses", "Login berhasil!");
+
+      // ⬅️ Redirect ke HomeScreen setelah login berhasil
+      Alert.alert("Sukses", "Login berhasil!", [
+        { text: "OK", onPress: () => navigate("/home") }
+      ]);
     } catch (error) {
       setIsLoading(false);
       console.error("Error saat login:", error.message);
 
       let errorMessage = error.message;
-
-      // Error paling umum jika 'adb reverse' belum jalan
       if (error.message.includes("Network request failed")) {
         errorMessage =
           "Koneksi ke server gagal. Pastikan 'adb reverse tcp:8000 tcp:8000' sudah dijalankan.";
@@ -114,7 +115,6 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Password */}
           <Text style={styles.label}>Password:</Text>
           <View style={styles.inputContainer}>
             <TextInput
@@ -123,8 +123,8 @@ export default function LoginScreen() {
               placeholder="Enter your password"
               placeholderTextColor="#ccc"
               secureTextEntry={!showPassword}
-              value={password} // ⬅️ Hubungkan ke state
-              onChangeText={setPassword} // ⬅️ Hubungkan ke state
+              value={password}
+              onChangeText={setPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
               <FontAwesome
@@ -136,7 +136,6 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Remember & Forgot */}
           <View style={styles.rememberRow}>
             <View style={styles.checkboxContainer}>
               <View style={styles.checkbox} />
@@ -147,13 +146,11 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Tombol Login */}
           <TouchableOpacity
             style={styles.loginButton}
-            onPress={handleLogin} // ⬅️ Panggil fungsi login
-            disabled={isLoading} // ⬅️ Matikan tombol saat loading
+            onPress={handleLogin}
+            disabled={isLoading}
           >
-            {/* ⬅️ Tampilkan loading atau teks */}
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
