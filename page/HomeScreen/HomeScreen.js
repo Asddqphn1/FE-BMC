@@ -15,7 +15,6 @@ import {
 // Menggunakan FontAwesome5 untuk ikon medis yang lebih lengkap
 import {
   Ionicons,
-  FontAwesome,
   MaterialIcons,
   MaterialCommunityIcons,
   FontAwesome5
@@ -28,20 +27,18 @@ import { useNavigate } from "react-router-native";
 
 // ======================= MEDICAL THEME COLORS ==========================
 const THEME = {
-  bg: "#F4F6F8", // Background Abu-abu Klinis (lembut di mata)
-  primary: "#448AFF", // Biru Utama (sesuai logo awal)
-  accent: "#00897B", // Teal (aksen medis)
+  bg: "#F4F6F8",
+  primary: "#448AFF",
+  accent: "#00897B",
   cardBg: "#FFFFFF",
-  textMain: "#263238", // Dark Blue Grey (lebih lembut dari hitam murni)
-  textSec: "#78909C", // Abu-abu Teks
-  border: "#ECEFF1", // Border Halus
+  textMain: "#263238",
+  textSec: "#78909C",
+  border: "#ECEFF1",
   inputBg: "#FFFFFF",
-
-  // Status Colors (Indikator kondisi pasien)
-  active: "#29B6F6", // Light Blue - Pasien Aktif
-  inactive: "#BDBDBD", // Grey - Tidak Aktif
-  done: "#66BB6A", // Green - Selesai/Pulang
-  referral: "#FFA726" // Orange - Rujukan
+  active: "#29B6F6",
+  inactive: "#BDBDBD",
+  done: "#66BB6A",
+  referral: "#FFA726"
 };
 
 // Utilitas Format
@@ -196,6 +193,15 @@ const PasienCard = ({ pasien, onPress }) => {
   );
 };
 
+// Placeholder EdukasiScreen (ganti dengan implementasi sebenarnya jika ada)
+const EdukasiScreen = () => (
+  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <Text style={{ color: THEME.textSec }}>
+      Halaman Edukasi (posting bidan)
+    </Text>
+  </View>
+);
+
 export default function HomeScreen() {
   const navigate = useNavigate();
 
@@ -295,10 +301,9 @@ export default function HomeScreen() {
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-        {/* HEADER: Logo & Nama Aplikasi Saja */}
+        {/* HEADER: Logo & Nama Aplikasi + Profile Icon (kanan atas) */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {/* Pastikan path logo benar */}
             <Image
               source={require("../../assets/Logo.png")}
               style={styles.logoImage}
@@ -312,15 +317,12 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Tombol Notifikasi */}
-          <TouchableOpacity style={styles.iconButton}>
-            <Ionicons
-              name="notifications-outline"
-              size={24}
-              color={THEME.textMain}
-            />
-            {/* Dot indikator notifikasi */}
-            <View style={styles.notifDot} />
+          {/* Profile Icon di kanan atas (ganti notifikasi) */}
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => setActiveScreen("profile")}
+          >
+            <FontAwesome5 name="user-alt" size={22} color={THEME.textMain} />
           </TouchableOpacity>
         </View>
 
@@ -348,8 +350,10 @@ export default function HomeScreen() {
                 {renderHomeContent()}
               </ScrollView>
             </>
-          ) : (
+          ) : activeScreen === "profile" ? (
             <ProfileScreen style={styles.profileArea} />
+          ) : (
+            <EdukasiScreen />
           )}
         </View>
 
@@ -389,24 +393,12 @@ export default function HomeScreen() {
             <Ionicons name="add" size={36} color="#FFF" />
           </TouchableOpacity>
 
-          {/* Tab Kanan: Profil */}
           <TouchableOpacity
             style={styles.navItem}
-            onPress={() => setActiveScreen("profile")}
+            onPress={() => navigate("/konten-edukasi")}
           >
-            <FontAwesome5
-              name={activeScreen === "profile" ? "user-alt" : "user"}
-              size={20}
-              color={activeScreen === "profile" ? THEME.primary : THEME.textSec}
-            />
-            <Text
-              style={[
-                styles.navText,
-                activeScreen === "profile" && styles.navTextActive
-              ]}
-            >
-              Profil
-            </Text>
+            <Ionicons name="book-outline" size={22} color={THEME.textSec} />
+            <Text style={styles.navText}>Edukasi</Text>
           </TouchableOpacity>
         </View>
 
@@ -454,7 +446,7 @@ const styles = StyleSheet.create({
   },
   headerLeft: { flexDirection: "row", alignItems: "center" },
   logoImage: { width: 32, height: 32, marginRight: 8 },
-  appNameContainer: { flexDirection: "column", justifyContent: "center" }, // Stack vertikal atau horizontal sesuai selera
+  appNameContainer: { flexDirection: "column", justifyContent: "center" },
   appNameText: {
     fontSize: 18,
     fontWeight: "bold",
@@ -463,19 +455,8 @@ const styles = StyleSheet.create({
   },
 
   iconButton: { padding: 8 },
-  notifDot: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#F44336",
-    borderWidth: 1,
-    borderColor: "#FFF"
-  },
 
-  // SEARCH BAR
+  // Search bar
   searchWrapper: {
     backgroundColor: "#FFF",
     paddingHorizontal: 20,
@@ -496,7 +477,7 @@ const styles = StyleSheet.create({
 
   // CONTENT
   contentContainer: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 100 }, // Extra padding bawah agar tidak tertutup FAB
+  scrollContent: { padding: 20, paddingBottom: 100 },
   profileArea: { flex: 1, padding: 20 },
 
   sectionTitle: {
@@ -516,8 +497,8 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.cardBg,
     borderRadius: 12,
     marginBottom: 16,
-    borderLeftWidth: 4, // Indikator status di kiri
-    borderLeftColor: THEME.inactive, // Default color, akan di-override inline style
+    borderLeftWidth: 4,
+    borderLeftColor: THEME.inactive,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -580,11 +561,14 @@ const styles = StyleSheet.create({
   },
   clinicalValue: { fontSize: 11, fontWeight: "bold", color: THEME.textMain },
 
+  // divider used in card
+  divider: { height: 1, backgroundColor: "#FAFAFA" },
+
   // === FLOATING CHAT BUTTON (BUBBLE) ===
   chatFab: {
     position: "absolute",
     right: 20,
-    bottom: 90, // Di atas bottom nav
+    bottom: 90,
     width: 50,
     height: 50,
     borderRadius: 25,
@@ -628,12 +612,12 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.primary,
     justifyContent: "center",
     alignItems: "center",
-    bottom: 25, // Menonjol ke atas
+    bottom: 25,
     elevation: 8,
     shadowColor: THEME.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     borderWidth: 4,
-    borderColor: "#F4F6F8" // Border putih agar terlihat 'terpotong' dari nav bar
+    borderColor: "#F4F6F8"
   }
 });

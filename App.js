@@ -18,6 +18,8 @@ import KemajuanPersalinan from "./page/HasilInputPartograf/KemajuanPersalinan";
 import KondisiIbu from "./page/HasilInputPartograf/KondisiIbu";
 import ObatDanCairan from "./page/HasilInputPartograf/ObatDanCairan";
 import KondisiJanin from "./page/HasilInputPartograf/KondisiJanin";
+import TambahEdukasi from "./page/KontenEdukasi/TambahEdukasi";
+import LihatEdukasi from "./page/KontenEdukasi/LihatEdukasi";
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -76,6 +78,8 @@ export default function App() {
             path="/partograf/:id/catatan/obat-dan-cairan"
             element={<ObatDanCairan />}
           />
+          <Route path="/konten-edukasi" element={<TambahEdukasi />} />
+          <Route path="/lihat-konten" element={<LihatEdukasi />} />
         </Routes>
       </NativeRouter>
     </SafeAreaProvider>
