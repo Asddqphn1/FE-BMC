@@ -10,13 +10,10 @@ import {
 import { useParams, useNavigate } from "react-router-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
-// === HELPERS YANG DIPERBAIKI UNTUK BACA JAM SESUAI TEKS DB ===
-
-// Helper: Ambil angka jam mentah-mentah dari string DB, abaikan zona waktu
+// === HELPERS ===
 const formatTime = (dateString) => {
   if (!dateString) return "-";
   const d = new Date(dateString);
-  // Pakai UTC methods untuk mengambil angka persis seperti yang tertulis di string ISO
   const hours = d.getUTCHours().toString().padStart(2, "0");
   const minutes = d.getUTCMinutes().toString().padStart(2, "0");
   return `${hours}:${minutes}`;
@@ -39,8 +36,6 @@ const formatDateFull = (dateString) => {
     "Nov",
     "Des",
   ];
-
-  // Pakai UTC methods agar tanggal/jam tidak geser +7 jam
   const day = d.getUTCDate();
   const month = months[d.getUTCMonth()];
   const hours = d.getUTCHours().toString().padStart(2, "0");
@@ -51,36 +46,25 @@ const formatDateFull = (dateString) => {
 
 const groupHistoryBy10Minutes = (data) => {
   if (!data || data.length === 0) return [];
-
   const sortedData = [...data].sort(
     (a, b) => new Date(b.waktu_mulai) - new Date(a.waktu_mulai)
   );
-
   const groups = {};
-
   sortedData.forEach((item) => {
     const date = new Date(item.waktu_mulai);
-
-    // LOGIKA FIX: Grouping berdasarkan angka menit mentah (UTC)
     const roundedMinutes = Math.floor(date.getUTCMinutes() / 10) * 10;
-
-    // Set waktu group based on UTC values agar konsisten
     const startH = date.getUTCHours().toString().padStart(2, "0");
     const startM = roundedMinutes.toString().padStart(2, "0");
 
-    // Hitung waktu selesai group manual (tambah 10 menit)
-    // Kita buat objek date baru untuk kalkulasi +10 menit yang aman
     const endDate = new Date(date);
     endDate.setUTCMinutes(roundedMinutes + 10);
     const endH = endDate.getUTCHours().toString().padStart(2, "0");
     const endM = endDate.getUTCMinutes().toString().padStart(2, "0");
 
     const groupKey = `${startH}:${startM} - ${endH}:${endM}`;
-
     if (!groups[groupKey]) groups[groupKey] = [];
     groups[groupKey].push(item);
   });
-
   return Object.keys(groups).map((key) => ({
     title: key,
     data: groups[key],
@@ -171,7 +155,9 @@ export default function KemajuanPersalinan() {
       {/* Header */}
       <View style={styles.appBar}>
         <TouchableOpacity
-          onPress={() => navigate(-1)}
+          // FIX: Arahkan ke /home-catatan/ID (Dashboard Utama) agar data ter-refresh
+          // Sesuai dengan path yang ada di file HasilInputPartograf.js
+          onPress={() => navigate("/home-catatan/" + id)}
           style={styles.backButton}
         >
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -311,7 +297,6 @@ export default function KemajuanPersalinan() {
                     {group.data.map((k, kIdx) => {
                       const start = new Date(k.waktu_mulai);
                       const end = new Date(k.waktu_selesai);
-                      // Hitung durasi tetap pakai selisih asli (karena selisih UTC dan Local sama saja)
                       const durasi = Math.round((end - start) / 1000);
                       return (
                         <View key={kIdx} style={styles.tr}>
@@ -347,7 +332,6 @@ export default function KemajuanPersalinan() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F7FA" },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-
   appBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -360,7 +344,6 @@ const styles = StyleSheet.create({
   },
   backButton: { padding: 4 },
   headerTitle: { fontSize: 18, fontWeight: "bold", color: "#333" },
-
   tabContainer: {
     flexDirection: "row",
     padding: 12,
@@ -381,9 +364,7 @@ const styles = StyleSheet.create({
   tabBtnActive: { backgroundColor: "#0277BD" },
   tabText: { marginLeft: 6, fontWeight: "600", color: "#666", fontSize: 14 },
   tabTextActive: { color: "#FFF" },
-
   content: { padding: 16 },
-
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -399,7 +380,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   emptyText: { color: "#999", fontStyle: "italic", fontSize: 14 },
-
   card: {
     backgroundColor: "#FFF",
     borderRadius: 12,
@@ -419,7 +399,6 @@ const styles = StyleSheet.create({
     color: "#888",
     textTransform: "uppercase",
   },
-
   barContainer: { marginBottom: 10 },
   barHeader: {
     flexDirection: "row",
@@ -432,9 +411,7 @@ const styles = StyleSheet.create({
   barUnit: { fontSize: 12, fontWeight: "normal", color: "#666" },
   track: { height: 10, backgroundColor: "#EEE", borderRadius: 5 },
   fill: { height: 10, backgroundColor: "#FBC02D", borderRadius: 5 },
-
   divider: { height: 1, backgroundColor: "#F0F0F0", marginVertical: 12 },
-
   rowBetween: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -457,7 +434,6 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     marginBottom: 8,
   },
-
   cardNoPadding: {
     backgroundColor: "#FFF",
     borderRadius: 12,
@@ -481,7 +457,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   countText: { fontSize: 12, fontWeight: "bold", color: "#0277BD" },
-
   thRow: {
     flexDirection: "row",
     paddingVertical: 8,
