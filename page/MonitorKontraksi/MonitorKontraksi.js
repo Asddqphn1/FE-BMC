@@ -20,6 +20,7 @@ import {
 } from "@expo/vector-icons";
 import { useNavigate, useParams } from "react-router-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const THEME = {
   bg: "#F4F6F8",
@@ -288,7 +289,7 @@ const MonitorKontraksi = () => {
   const groupedHistory = groupHistoryBy10Minutes(history);
 
   return (
-    <View style={styles.mainContainer}>
+    <SafeAreaView style={styles.mainContainer}>
       <StatusBar backgroundColor={THEME.bg} barStyle="dark-content" />
       <View style={styles.appBar}>
         <TouchableOpacity onPress={() => navigate(-1)} style={styles.backBtn}>
@@ -460,7 +461,7 @@ const MonitorKontraksi = () => {
           )}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

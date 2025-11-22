@@ -16,6 +16,7 @@ import { useParams, useNavigate } from "react-router-native";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // ======================= MEDICAL THEME ==========================
 const THEME = {
@@ -223,7 +224,7 @@ export default function Per4jam() {
   ];
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={THEME.bg} />
 
       <View style={styles.appBar}>
@@ -401,7 +402,7 @@ export default function Per4jam() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </SafeAreaView>
   );
 }
 
