@@ -289,7 +289,7 @@ export default function HomeScreen() {
         pasien={pasien}
         onPress={() =>
           navigate(`/home-catatan/${pasien.partograf_id}`, {
-            state: { partografId: pasien.partograf_id }
+            state: { partografId: pasien.partograf_id, name: pasien.nama }
           })
         }
       />

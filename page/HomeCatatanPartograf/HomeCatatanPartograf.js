@@ -8,16 +8,17 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
-  Platform,
+  Platform
 } from "react-native";
 import {
   MaterialIcons,
   Ionicons,
   FontAwesome5,
-  MaterialCommunityIcons,
+  MaterialCommunityIcons
 } from "@expo/vector-icons";
 import { useNavigate, useLocation } from "react-router-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // ======================= MEDICAL THEME ==========================
 const THEME = {
@@ -30,7 +31,7 @@ const THEME = {
   menuKontraksi: "#0277BD",
   menu30: "#00897B",
   menu4h: "#F9A825",
-  disabled: "#CFD8DC",
+  disabled: "#CFD8DC"
 };
 
 // ------------------ COMPONENT: DASHBOARD BUTTON ------------------
@@ -41,7 +42,7 @@ const DashboardButton = ({
   color,
   onPress,
   disabled,
-  loading,
+  loading
 }) => (
   <TouchableOpacity
     style={[styles.dashBtn, disabled && styles.dashBtnDisabled]}
@@ -52,7 +53,7 @@ const DashboardButton = ({
     <View
       style={[
         styles.iconCircle,
-        { backgroundColor: disabled ? "#ECEFF1" : color + "15" },
+        { backgroundColor: disabled ? "#ECEFF1" : color + "15" }
       ]}
     >
       {loading ? (
@@ -86,10 +87,17 @@ const DashboardButton = ({
 const HomeCatatanPartograf = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const partografId = location.state?.partografId;
-
+  const [partografId, setPartografId] = useState(location.state?.partografId);
+  const [name, setName] = useState(location.state?.name);
   const [catatanPartografId, setCatatanPartografId] = useState(null);
   const [isCheckingId, setIsCheckingId] = useState(true);
+
+  useEffect(() => {
+    if (location.state) {
+      setPartografId(location.state.partografId);
+      setName(location.state.name);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const loadCatatanId = async () => {
@@ -141,25 +149,25 @@ const HomeCatatanPartograf = () => {
               <FontAwesome5 name="user-injured" size={24} color="#FFF" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.patientLabel}>NO. REGISTRASI</Text>
-              <Text style={styles.patientValue}>{partografId || "N/A"}</Text>
+              <Text style={styles.patientLabel}>NAMA PASIEN</Text>
+              <Text style={styles.patientValue}>{name || "N/A"}</Text>
             </View>
             <View
               style={[
                 styles.statusBadge,
-                { backgroundColor: hasData ? "#E8F5E9" : "#FFEBEE" },
+                { backgroundColor: hasData ? "#E8F5E9" : "#FFEBEE" }
               ]}
             >
               <View
                 style={[
                   styles.statusDot,
-                  { backgroundColor: hasData ? "#2E7D32" : "#C62828" },
+                  { backgroundColor: hasData ? "#2E7D32" : "#C62828" }
                 ]}
               />
               <Text
                 style={[
                   styles.statusText,
-                  { color: hasData ? "#2E7D32" : "#C62828" },
+                  { color: hasData ? "#2E7D32" : "#C62828" }
                 ]}
               >
                 {hasData ? "AKTIF" : "PENDING"}
@@ -214,7 +222,7 @@ const HomeCatatanPartograf = () => {
             color={THEME.menu30}
             onPress={() =>
               navigate(`/partograf/${partografId}/catatan/per30`, {
-                state: { partografId, catatanPartografId },
+                state: { partografId, catatanPartografId }
               })
             }
             // disabled={!hasData} <-- Opsional: Tetap disable atau buka tapi mode draft juga?
@@ -230,7 +238,7 @@ const HomeCatatanPartograf = () => {
             color={THEME.menu4h}
             onPress={() =>
               navigate(`/partograf/${partografId}/catatan/per4jam`, {
-                state: { partografId, catatanPartografId },
+                state: { partografId, catatanPartografId }
               })
             }
           />
@@ -242,7 +250,7 @@ const HomeCatatanPartograf = () => {
             color="#6A1B9A"
             onPress={() =>
               navigate(`/partograf/${partografId}/hasil-input`, {
-                state: { partografId },
+                state: { partografId }
               })
             }
             disabled={!hasData}
@@ -253,7 +261,7 @@ const HomeCatatanPartograf = () => {
   };
 
   return (
-    <View style={styles.mainContainer}>
+    <SafeAreaView style={styles.mainContainer}>
       <StatusBar backgroundColor={THEME.bg} barStyle="dark-content" />
       <View style={styles.appBar}>
         <TouchableOpacity
@@ -274,7 +282,7 @@ const HomeCatatanPartograf = () => {
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {renderContent()}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -290,14 +298,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E0E0E0",
-    elevation: 2,
+    elevation: 2
   },
   appBarTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: THEME.textMain,
     letterSpacing: 0.5,
-    textTransform: "uppercase",
+    textTransform: "uppercase"
   },
   backBtn: { padding: 4 },
   loadingView: { alignItems: "center", marginTop: 60 },
@@ -313,7 +321,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    elevation: 3,
+    elevation: 3
   },
   patientRow: { flexDirection: "row", alignItems: "center" },
   avatarBox: {
@@ -323,26 +331,26 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.textSec,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 16,
+    marginRight: 16
   },
   patientLabel: {
     fontSize: 10,
     color: THEME.textSec,
     fontWeight: "bold",
-    letterSpacing: 1,
+    letterSpacing: 1
   },
   patientValue: {
     fontSize: 18,
     color: THEME.textMain,
     fontWeight: "bold",
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace"
   },
   statusBadge: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: 20
   },
   statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
   statusText: { fontSize: 10, fontWeight: "bold" },
@@ -352,7 +360,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     backgroundColor: "#FFF3E0", // Orange muda utk info
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 8
   },
   alertText: { fontSize: 12 },
   sectionHeader: {
@@ -361,12 +369,12 @@ const styles = StyleSheet.create({
     color: "#90A4AE",
     marginBottom: 12,
     marginLeft: 4,
-    letterSpacing: 1,
+    letterSpacing: 1
   },
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    justifyContent: "space-between"
   },
   dashBtn: {
     width: "48%",
@@ -381,7 +389,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.03,
     elevation: 2,
     height: 160,
-    justifyContent: "space-between",
+    justifyContent: "space-between"
   },
   dashBtnDisabled: { backgroundColor: "#FAFAFA", borderColor: "#F5F5F5" },
   iconCircle: {
@@ -390,17 +398,17 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 12
   },
   btnContent: { flex: 1, justifyContent: "flex-end" },
   btnTitle: {
     fontSize: 15,
     fontWeight: "700",
     color: THEME.textMain,
-    marginBottom: 4,
+    marginBottom: 4
   },
   btnSubtitle: { fontSize: 11, color: THEME.textSec },
-  lockIcon: { position: "absolute", top: 12, right: 12 },
+  lockIcon: { position: "absolute", top: 12, right: 12 }
 });
 
 export default HomeCatatanPartograf;

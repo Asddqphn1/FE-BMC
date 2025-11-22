@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -8,142 +8,315 @@ import {
   TouchableOpacity
 } from "react-native";
 import { useParams, useNavigate } from "react-router-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+
+const EmptyState = ({ text }) => (
+  <View style={styles.emptyContainer}>
+    <View style={styles.emptyIconBg}>
+      <MaterialCommunityIcons
+        name="clipboard-text-outline"
+        size={32}
+        color="#999"
+      />
+    </View>
+    <Text style={styles.emptyText}>{text}</Text>
+  </View>
+);
+
+// Fungsi untuk menambahkan keterangan Penyusupan (Molase)
+const getPenyusupanLabel = (value) => {
+  switch (value) {
+    case 0:
+      return "0 (Tulang Kepala Janin Terpisah)";
+    case 1:
+      return "1 (Tulang Kepala Janin Bersentuhan)";
+    case 2:
+      return "2 (Tulang Kepala Janin Tumpang Tindih Tetapi Masih Dapat Dipisahkan)";
+    case 3:
+      return "3 (Tulang Kepala Janin Tumpang Tindih Dan Tidak Dapat Dipisahkan)";
+    default:
+      return value ?? "-";
+  }
+};
+
+// Fungsi untuk menambahkan keterangan Air Ketuban
+const getAirKetubanLabel = (value) => {
+  switch (value) {
+    case "U":
+      return "U (Ketuban Belum Pecah)";
+    case "J":
+      return "J (Ketuban Pecah Dan Air Jernih)";
+    case "M":
+      return "M (Ketuban Pecah Dan Air Bercampur Mekonium)";
+    case "D":
+      return "D (Ketuban Pecah Dan Air Bercampur Darah)";
+    case "K":
+      return "K (Ketuban Pecah Tetapi Air Kering)";
+    default:
+      return value ?? "-";
+  }
+};
+
+const formatDateFull = (dateString) => {
+  if (!dateString) return "-";
+  const d = new Date(dateString);
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "Mei",
+    "Jun",
+    "Jul",
+    "Agu",
+    "Sep",
+    "Okt",
+    "Nov",
+    "Des"
+  ];
+  const day = d.getUTCDate();
+  const month = months[d.getUTCMonth()];
+  const hours = d.getUTCHours().toString().padStart(2, "0");
+  const minutes = d.getUTCMinutes().toString().padStart(2, "0");
+  return `${day} ${month}, ${hours}:${minutes}`;
+};
 
 export default function KondisiJanin() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [data, setData] = useState({
-    djj: null,
-    penyusupan: null,
-    air_ketuban: null
-  });
-
+  const [activeTab, setActiveTab] = useState("djj");
+  const [apiData, setApiData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ===================== FETCH API =====================
+  const tabs = [
+    { key: "djj", label: "DJJ", icon: "heart-pulse", unit: "x/menit" },
+    {
+      key: "penyusupan",
+      label: "Penyusupan",
+      icon: "arrow-collapse-vertical",
+      unit: ""
+    },
+    { key: "air_ketuban", label: "Air Ketuban", icon: "water", unit: "" }
+  ];
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch(
           `https://restful-api-bmc-production.up.railway.app/api/partograf/${id}/catatan`
         );
-
         const json = await res.json();
-
-        const latest = json.data[0];
-
-        setData({
-          djj: latest.djj ?? null,
-          penyusupan: latest.penyusupan ?? null,
-          warna_air_ketuban: latest.air_ketuban ?? null
-        });
+        setApiData(Array.isArray(json.data) ? json.data : []);
       } catch (error) {
-        console.error("Gagal mengambil data:", error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [id]);
+
+  const tabData = useMemo(() => {
+    return [...apiData].sort(
+      (a, b) => new Date(b.waktu_catat) - new Date(a.waktu_catat)
+    );
+  }, [apiData]);
+
+  const renderValue = (item) => {
+    switch (activeTab) {
+      case "djj":
+        return item.djj != null ? item.djj : null;
+      case "penyusupan":
+        if (item.molase != null) {
+          const molaseNumber = Number(item.molase);
+          return getPenyusupanLabel(molaseNumber);
+        }
+        return null;
+      case "air_ketuban":
+        return item.air_ketuban != null
+          ? getAirKetubanLabel(item.air_ketuban)
+          : null;
+      default:
+        return null;
+    }
+  };
+
+  const filteredData = tabData.filter((item) => renderValue(item) !== null);
 
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#0277BD" />
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Back button */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigate(`/partograf/${id}/hasil-input`)}
-      >
-        <Ionicons name="arrow-back" size={24} color="#1A2530" />
-        <Text style={styles.backText}>Kembali</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.header}>Kondisi Janin</Text>
-
-      {/* ===================== DJJ ===================== */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Detak Jantung Janin (DJJ)</Text>
-        <Text style={styles.value}>{data.djj ?? "Belum dicatat"}</Text>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.appBar}>
+        <TouchableOpacity
+          onPress={() => navigate(-1)}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Kondisi Janin</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      {/* ===================== PENYUSUPAN ===================== */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Penyusupan</Text>
-        <Text style={styles.value}>{data.penyusupan ?? "Belum dicatat"}</Text>
+      {/* Tabs */}
+      <View style={styles.tabContainer}>
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[
+              styles.tabBtn,
+              activeTab === tab.key && styles.tabBtnActive
+            ]}
+            onPress={() => setActiveTab(tab.key)}
+          >
+            <MaterialCommunityIcons
+              name={tab.icon}
+              size={20}
+              color={activeTab === tab.key ? "#FFF" : "#666"}
+              style={{ marginBottom: 2 }}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === tab.key && styles.tabTextActive
+              ]}
+            >
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* ===================== WARNA AIR KETUBAN ===================== */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Warna Air Ketuban</Text>
-        <Text style={styles.value}>
-          {data.warna_air_ketuban ?? "Belum dicatat"}
-        </Text>
-      </View>
-    </ScrollView>
+      <ScrollView contentContainerStyle={styles.content}>
+        {filteredData.length === 0 ? (
+          <EmptyState
+            text={`Belum ada data ${
+              tabs.find((t) => t.key === activeTab).label
+            }`}
+          />
+        ) : (
+          filteredData.map((item, idx) => (
+            <View key={idx} style={styles.card}>
+              <View style={styles.cardDateRow}>
+                <Ionicons name="time-outline" size={14} color="#888" />
+                <Text style={styles.cardDate}>
+                  {item.waktu_catat
+                    ? formatDateFull(item.waktu_catat).toLocaleString()
+                    : "-"}
+                </Text>
+              </View>
+              <View style={styles.rowBetween}>
+                <Text style={styles.label}>
+                  {tabs.find((t) => t.key === activeTab).label}
+                </Text>
+                <Text
+                  style={[
+                    styles.valueText,
+                    activeTab === "penyusupan" && styles.penyusupanValue
+                  ]}
+                >
+                  {renderValue(item)}
+                  {activeTab === "djj"
+                    ? ` ${tabs.find((t) => t.key === activeTab).unit}`
+                    : ""}
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
-// ===================== STYLE =====================
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: "#F7F9FC",
-    flex: 1
-  },
-
-  backButton: {
+  container: { flex: 1, backgroundColor: "#F5F7FA" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  appBar: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15
+    justifyContent: "space-between",
+    padding: 16,
+    backgroundColor: "#FFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEE",
+    paddingTop: 40
   },
-  backText: {
-    marginLeft: 6,
-    fontSize: 16,
-    color: "#1A2530",
-    fontWeight: "600"
+  backButton: { padding: 4 },
+  headerTitle: { fontSize: 18, fontWeight: "bold", color: "#333" },
+  tabContainer: {
+    flexDirection: "row",
+    padding: 12,
+    backgroundColor: "#FFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEE"
   },
-
-  header: {
-    fontSize: 22,
-    fontWeight: "800",
-    marginBottom: 20,
-    color: "#1A2530"
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    padding: 18,
-    borderRadius: 14,
-    marginBottom: 18,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 8,
-    color: "#333"
-  },
-  value: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#0A84FF"
-  },
-  center: {
+  tabBtn: {
     flex: 1,
-    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: "#F5F5F5",
+    marginHorizontal: 4,
     alignItems: "center"
-  }
+  },
+  tabBtnActive: { backgroundColor: "#0277BD" },
+  tabText: { fontWeight: "600", color: "#666" },
+  tabTextActive: { color: "#FFF" },
+  content: { padding: 16 },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 50
+  },
+  emptyIconBg: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#E0E0E0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10
+  },
+  emptyText: { color: "#999", fontStyle: "italic", fontSize: 14 },
+  card: {
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2
+  },
+  cardDateRow: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+  cardDate: {
+    marginLeft: 6,
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#888",
+    textTransform: "uppercase"
+  },
+  rowBetween: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    flexWrap: "wrap"
+  },
+  label: { fontSize: 14, color: "#555", fontWeight: "500", maxWidth: "45%" },
+  valueText: {
+    fontSize: 14,
+    color: "#0277BD",
+    fontWeight: "bold",
+    maxWidth: "50%"
+  },
+  penyusupanValue: { flexShrink: 1 }
 });

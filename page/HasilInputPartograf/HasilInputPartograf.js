@@ -58,6 +58,7 @@ const HasilInputPartograf = () => {
   const location = useLocation();
   // Pastikan partografId terisi, prioritas dari state, fallback ke params id
   const partografId = location.state?.partografId || id;
+  const name = location.state?.name || "Pasien";
   const navigate = useNavigate();
 
   // Fungsi navigasi menu
@@ -82,7 +83,7 @@ const HasilInputPartograf = () => {
           // FIX: Tambahkan STATE saat back, biar Dashboard gak N/A
           // Pastikan path '/home-catatan/' ini benar sesuai router abang
           onPress={() =>
-            navigate(`/home-catatan/${id}`, { state: { partografId: id } })
+            navigate(`/home-catatan/${id}`, { state: { partografId: id, name: name } })
           }
           style={styles.backBtn}
         >
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   backBtn: { marginRight: 16 },
-  appBarTitle: { fontSize: 18, fontWeight: "700", color: THEME.textMain },
+  appBarTitle: { fontSize: 18, fontWeight: "700", color: THEME.textMain, textAlign: "center", flex: 1, marginRight: 40 },
 
   contentContainer: { padding: 20 },
   sectionHeader: {

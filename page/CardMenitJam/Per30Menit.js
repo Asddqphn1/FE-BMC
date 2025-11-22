@@ -20,6 +20,7 @@ import {
 import { useParams, useLocation, useNavigate } from "react-router-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const THEME = {
   bg: "#F4F6F8",
@@ -169,7 +170,7 @@ export default function Per30Menit() {
   };
 
   return (
-    <View style={styles.mainContainer}>
+    <SafeAreaView style={styles.mainContainer}>
       <StatusBar backgroundColor={THEME.bg} barStyle="dark-content" />
       <View style={styles.appBar}>
         <TouchableOpacity onPress={() => navigate(-1)} style={styles.backBtn}>
@@ -180,14 +181,7 @@ export default function Per30Menit() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <View style={styles.patientInfoBar}>
-          <FontAwesome5
-            name="file-medical-alt"
-            size={16}
-            color={THEME.primary}
-          />
-          <Text style={styles.patientInfoText}>NO. REKAM MEDIS: {id}</Text>
-        </View>
+        
 
         {/* === TOMBOL AKSES CEPAT (NEW) === */}
         <TouchableOpacity onPress={openMonitor} style={styles.quickAccessBtn}>
@@ -306,7 +300,7 @@ export default function Per30Menit() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
