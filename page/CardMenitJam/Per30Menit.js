@@ -10,12 +10,13 @@ import {
   TextInput,
   StatusBar,
   Platform,
+  Modal // Tambahkan import Modal
 } from "react-native";
 import {
   MaterialIcons,
   MaterialCommunityIcons,
   FontAwesome5,
-  Ionicons,
+  Ionicons
 } from "@expo/vector-icons";
 import { useParams, useLocation, useNavigate } from "react-router-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -27,12 +28,12 @@ const THEME = {
   card: "#FFFFFF",
   primary: "#0277BD",
   accent: "#C2185B",
-  success: "#2E7D32",
+  success: "#2E7D32", // Warna untuk success
   textMain: "#263238",
   textSec: "#78909C",
   border: "#CFD8DC",
   inputBg: "#FAFAFA",
-  disabled: "#ECEFF1",
+  disabled: "#ECEFF1"
 };
 
 const toLocalISOString = (date) => {
@@ -57,6 +58,20 @@ export default function Per30Menit() {
 
   // State Draft
   const [hasDraft, setHasDraft] = useState(false);
+
+  // --- STATE BARU UNTUK NOTIFIKASI KUSTOM ---
+  const [showCustomAlert, setShowCustomAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState({
+    type: "success", // success | error | info
+    title: "",
+    message: ""
+  });
+
+  // --- FUNGSI BARU UNTUK MENAMPILKAN NOTIFIKASI ---
+  const showNotification = (type, title, message) => {
+    setAlertMessage({ type, title, message });
+    setShowCustomAlert(true);
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -91,12 +106,12 @@ export default function Per30Menit() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${token}`
             },
             body: JSON.stringify({
               waktu_mulai: item.waktu_mulai,
-              waktu_selesai: item.waktu_selesai,
-            }),
+              waktu_selesai: item.waktu_selesai
+            })
           }
         );
       }
@@ -107,13 +122,61 @@ export default function Per30Menit() {
       console.log("Sync Complete!");
     } catch (e) {
       console.error("Sync Error", e);
-      Alert.alert("Info", "Gagal sinkronisasi kontraksi offline.");
+      // MENGGANTI ALERT STANDAR
+      showNotification(
+        "info",
+        "Gagal Sync",
+        "Gagal sinkronisasi kontraksi offline."
+      );
     }
   };
 
   const submitVitals = async () => {
+    // --- PENGECEKAN KOSONG ---
     if (!djj || !nadi)
-      return Alert.alert("Form Kosong", "Isi DJJ, Nadi & Waktu Catat.");
+      return showNotification(
+        "error",
+        "Form Kosong",
+        "Isi DJJ, Nadi & Waktu Catat."
+      );
+
+    const djjNum = parseInt(djj);
+    const nadiNum = parseInt(nadi);
+
+    // --- PENGECEKAN TIPE DATA ---
+    if (isNaN(djjNum) || djjNum.toString() !== djj) {
+      return showNotification(
+        "error",
+        "Input Tidak Valid",
+        "DJJ harus berupa angka."
+      );
+    }
+    if (isNaN(nadiNum) || nadiNum.toString() !== nadi) {
+      return showNotification(
+        "error",
+        "Input Tidak Valid",
+        "Nadi harus berupa angka."
+      );
+    }
+
+    // --- VALIDASI RENTANG DJJ (Contoh: 110-160 bpm) ---
+    if (djjNum < 110 || djjNum > 160) {
+      return showNotification(
+        "error",
+        "Nilai DJJ Tidak Wajar",
+        "DJJ harus antara 110-160 bpm."
+      );
+    }
+
+    // --- VALIDASI RENTANG NADI IBU (Contoh: 60-120 bpm) ---
+    if (nadiNum < 60 || nadiNum > 120) {
+      return showNotification(
+        "error",
+        "Nilai Nadi Ibu Tidak Wajar",
+        "Nadi Ibu harus antara 60-120 bpm."
+      );
+    }
+
     setLoading(true);
     try {
       const waktuLokal = toLocalISOString(waktuCatat);
@@ -123,14 +186,14 @@ export default function Per30Menit() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${userToken}`,
+            Authorization: `Bearer ${userToken}`
           },
           body: JSON.stringify({
             partograf_id: id,
-            djj,
-            nadi_ibu: nadi,
-            waktu_catat: waktuLokal,
-          }),
+            djj: djjNum, // Kirim sebagai angka
+            nadi_ibu: nadiNum, // Kirim sebagai angka
+            waktu_catat: waktuLokal
+          })
         }
       );
       const json = await res.json();
@@ -145,14 +208,23 @@ export default function Per30Menit() {
           await syncDraftKontraksi(newId, userToken);
         }
 
-        Alert.alert("Berhasil", "Data Vital & Kontraksi tersimpan.", [
-          { text: "OK" },
-        ]);
+        // MENGGANTI ALERT STANDAR
+        showNotification(
+          "success",
+          "Berhasil 🎉",
+          "Data Vital & Kontraksi tersimpan."
+        );
       } else {
-        Alert.alert("Gagal", json.message);
+        // MENGGANTI ALERT STANDAR
+        showNotification("error", "Gagal 🛑", json.message);
       }
     } catch (e) {
-      Alert.alert("Error", "Network Error");
+      // MENGGANTI ALERT STANDAR
+      showNotification(
+        "error",
+        "Error Jaringan",
+        "Periksa koneksi internet Anda."
+      );
     } finally {
       setLoading(false);
     }
@@ -172,6 +244,46 @@ export default function Per30Menit() {
   return (
     <SafeAreaView style={styles.mainContainer}>
       <StatusBar backgroundColor={THEME.bg} barStyle="dark-content" />
+
+      {/* === MODAL NOTIFIKASI KUSTOM (Pop-up Berhasil/Gagal) === */}
+      <Modal visible={showCustomAlert} transparent={true} animationType="fade">
+        <View style={customModalStyles.centeredView}>
+          <View
+            style={[
+              customModalStyles.modalView,
+              {
+                backgroundColor:
+                  alertMessage.type === "success"
+                    ? THEME.success
+                    : alertMessage.type === "error"
+                    ? THEME.accent
+                    : THEME.primary // info/default color
+              }
+            ]}
+          >
+            <MaterialIcons
+              name={alertMessage.type === "success" ? "check-circle" : "error"}
+              size={36}
+              color="white"
+              style={{ marginBottom: 8 }}
+            />
+            <Text style={customModalStyles.modalTitle}>
+              {alertMessage.title}
+            </Text>
+            <Text style={customModalStyles.modalText}>
+              {alertMessage.message}
+            </Text>
+
+            <TouchableOpacity
+              style={customModalStyles.closeButton}
+              onPress={() => setShowCustomAlert(false)}
+            >
+              <Text style={customModalStyles.closeButtonText}>Tutup</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.appBar}>
         <TouchableOpacity onPress={() => navigate(-1)} style={styles.backBtn}>
           <MaterialIcons name="arrow-back" size={24} color={THEME.textMain} />
@@ -181,8 +293,6 @@ export default function Per30Menit() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 16 }}>
-        
-
         {/* === TOMBOL AKSES CEPAT (NEW) === */}
         <TouchableOpacity onPress={openMonitor} style={styles.quickAccessBtn}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -254,7 +364,7 @@ export default function Per30Menit() {
                   value={djj}
                   onChangeText={setDjj}
                   keyboardType="numeric"
-                  placeholder="140"
+                  placeholder="140 (110-160)" // Info rentang
                   placeholderTextColor={THEME.textSec}
                 />
                 <Text style={styles.unit}>bpm</Text>
@@ -269,7 +379,7 @@ export default function Per30Menit() {
                   value={nadi}
                   onChangeText={setNadi}
                   keyboardType="numeric"
-                  placeholder="80"
+                  placeholder="80 (60-120)" // Info rentang
                   placeholderTextColor={THEME.textSec}
                 />
                 <Text style={styles.unit}>bpm</Text>
@@ -314,7 +424,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: "#FFF",
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    borderBottomColor: "#E0E0E0"
   },
   appBarTitle: { fontSize: 16, fontWeight: "700", color: THEME.textMain },
   backBtn: { padding: 4 },
@@ -328,14 +438,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#B3E5FC",
+    borderColor: "#B3E5FC"
   },
   patientInfoText: {
     fontSize: 13,
     fontWeight: "bold",
     color: "#0277BD",
     marginLeft: 8,
-    letterSpacing: 0.5,
+    letterSpacing: 0.5
   },
   medicalCard: {
     backgroundColor: "#FFF",
@@ -347,31 +457,32 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    elevation: 2,
+    elevation: 2
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start", // Ubah ke flex-start agar ikon dan judul berdekatan
     marginBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#F5F5F5",
-    paddingBottom: 12,
+    paddingBottom: 12
   },
   cardTitle: {
     fontSize: 13,
     fontWeight: "700",
     color: THEME.textMain,
     marginLeft: 8,
-    letterSpacing: 0.5,
+    letterSpacing: 0.5
   },
-  formRow: { flexDirection: "row" },
+  formRow: { flexDirection: "row", marginTop: 10 },
   inputGroup: { flex: 1 },
   label: {
     fontSize: 12,
     fontWeight: "600",
     color: THEME.textSec,
     marginBottom: 6,
+    marginTop: 10
   },
   inputBox: {
     flexDirection: "row",
@@ -380,14 +491,14 @@ const styles = StyleSheet.create({
     borderColor: THEME.border,
     borderRadius: 4,
     backgroundColor: THEME.inputBg,
-    paddingHorizontal: 12,
+    paddingHorizontal: 12
   },
   input: {
     flex: 1,
     paddingVertical: 10,
     fontSize: 16,
     color: THEME.textMain,
-    fontWeight: "600",
+    fontWeight: "600"
   },
   unit: { fontSize: 12, color: THEME.textSec },
   saveBtn: {
@@ -399,13 +510,13 @@ const styles = StyleSheet.create({
     shadowColor: THEME.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
-    elevation: 2,
+    elevation: 2
   },
   saveBtnText: {
     color: "#FFF",
     fontWeight: "bold",
     fontSize: 14,
-    letterSpacing: 0.5,
+    letterSpacing: 0.5
   },
 
   // NEW STYLES FOR QUICK ACCESS
@@ -420,7 +531,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
-    elevation: 3,
+    elevation: 3
   },
   quickTitle: { color: "#FFF", fontSize: 14, fontWeight: "bold" },
   quickSubtitle: { color: "#CFD8DC", fontSize: 11, marginTop: 2 },
@@ -432,7 +543,54 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#FFE0B2",
+    borderColor: "#FFE0B2"
   },
-  draftText: { color: "#E65100", fontSize: 11, marginLeft: 8, flex: 1 },
+  draftText: { color: "#E65100", fontSize: 11, marginLeft: 8, flex: 1 }
+});
+
+// --- STYLES BARU UNTUK MODAL NOTIFIKASI KUSTOM ---
+const customModalStyles = StyleSheet.create({
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.4)" // Overlay semi-transparan
+  },
+  modalView: {
+    margin: 20,
+    borderRadius: 10,
+    padding: 30,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: "80%" // Sesuaikan lebar modal
+  },
+  modalTitle: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8
+  },
+  modalText: {
+    color: "white",
+    marginBottom: 15,
+    textAlign: "center",
+    fontSize: 14
+  },
+  closeButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 5,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    elevation: 2,
+    marginTop: 10
+  },
+  closeButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center"
+  }
 });
