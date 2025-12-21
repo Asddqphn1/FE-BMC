@@ -23,7 +23,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigate } from "react-router-native";
-
 // Import Komponen Eksternal (Sesuai File Kamu)
 import TambahPasienForm from "./TambahPasienForm";
 import ProfileScreen from "../ProfileScreen/ProfileScreen";
@@ -76,6 +75,7 @@ const PasienCard = ({ pasien, onPress, onStatusPress }) => {
           color: THEME.inactive,
           label: "Non-Aktif",
           icon: "bed-outline",
+
         };
     }
   };
@@ -159,7 +159,7 @@ export default function HomeScreen() {
       const res = await fetch(
         "https://restful-api-bmc-production-v2.up.railway.app/api/bidan/pasien",
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
       const data = await res.json();
