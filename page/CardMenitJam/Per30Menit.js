@@ -10,13 +10,13 @@ import {
   TextInput,
   StatusBar,
   Modal,
-  Pressable,
+  Pressable // Tambahan untuk Modal
 } from "react-native";
 import {
   MaterialIcons,
   MaterialCommunityIcons,
   Ionicons,
-  Feather,
+  Feather // Tambahan untuk Icon Modal
 } from "@expo/vector-icons";
 import { useParams, useNavigate } from "react-router-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -24,6 +24,7 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { scheduleRutinReminder } from "../../src/NotificationService";
 
+// --- UPDATE THEME (Supaya support warna Success/Danger/Warning Modal) ---
 const THEME = {
   bg: "#F4F6F8",
   card: "#FFFFFF",
@@ -131,6 +132,7 @@ function CustomAlertModal({
   );
 }
 
+// ======================= MAIN COMPONENT ==========================
 export default function Per30Menit() {
   const { id } = useParams(); // ID PARTOGRAF
   const navigate = useNavigate();
@@ -163,7 +165,7 @@ export default function Per30Menit() {
     onConfirm: null,
     confirmText: "Ya",
     cancelText: "Tutup",
-    onClose: null,
+    onClose: null // Custom close handler (opsional)
   });
 
   const showCustomAlert = (
@@ -179,7 +181,7 @@ export default function Per30Menit() {
       confirmText: "OK",
       cancelText: "Tutup",
       onConfirm: null,
-      onClose: customOnClose,
+      onClose: customOnClose // Callback jika tombol tutup/ok ditekan
     });
     setModalVisible(true);
   };
@@ -302,7 +304,9 @@ export default function Per30Menit() {
     }
   };
 
+  // --- FUNGSI SUBMIT DENGAN TAMBAHAN VALIDASI BATAS ---
   const submitVitals = async () => {
+    // Validasi Basic
     if (!djj || !nadi)
       return showCustomAlert(
         "Form Kosong",
@@ -310,6 +314,7 @@ export default function Per30Menit() {
         "danger"
       );
 
+    // Validasi Double Check
     if (hisFrekuensi && parseInt(hisFrekuensi) > 5) {
       return showCustomAlert(
         "Validasi Gagal",
@@ -334,8 +339,8 @@ export default function Per30Menit() {
           body: JSON.stringify({
             partograf_id: id,
             waktu_catat: waktuLokal,
-            djj: djj,
-            nadi_ibu: nadi,
+            djj: djjNum,
+            nadi_ibu: nadiNum,
             kontraksi_frekuensi: hisFrekuensi ? parseInt(hisFrekuensi) : null,
             kontraksi_durasi: hisDurasi ? parseInt(hisDurasi) : null,
           }),
@@ -356,7 +361,7 @@ export default function Per30Menit() {
         await AsyncStorage.removeItem(`form_input_draft_${id}`);
 
         await scheduleRutinReminder(namaPasien, waktuCatat);
-
+        // SUKSES: Tampilkan modal success, lalu navigasi back saat ditutup
         showCustomAlert(
           "Berhasil",
           "Data Pantau Rutin & Kontraksi tersimpan.",
@@ -389,7 +394,7 @@ export default function Per30Menit() {
     <SafeAreaView style={styles.mainContainer}>
       <StatusBar backgroundColor={THEME.bg} barStyle="dark-content" />
 
-      {/* MODAL ALERT */}
+      {/* --- IMPLEMENTASI CUSTOM ALERT MODAL BARU --- */}
       <CustomAlertModal
         isVisible={modalVisible}
         onClose={() => {
@@ -534,25 +539,25 @@ export default function Per30Menit() {
           <Text style={[styles.label, { marginTop: 8 }]}>Tanda Vital</Text>
           <View style={styles.formRow}>
             <View style={styles.inputGroup}>
-              <Text style={styles.subLabel}>DJJ (Bpm)</Text>
+              <Text style={styles.subLabel}>DJJ (120-160)</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
                 placeholder="140"
                 value={djj}
-                onChangeText={setDjj}
+                onChangeText={(t) => setDjj(t.replace(/[^0-9]/g, ""))}
                 maxLength={3}
               />
             </View>
             <View style={{ width: 16 }} />
             <View style={styles.inputGroup}>
-              <Text style={styles.subLabel}>Nadi Ibu</Text>
+              <Text style={styles.subLabel}>Nadi Ibu (60-100)</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
                 placeholder="80"
                 value={nadi}
-                onChangeText={setNadi}
+                onChangeText={(t) => setNadi(t.replace(/[^0-9]/g, ""))}
                 maxLength={3}
               />
             </View>
